@@ -1,3 +1,2 @@
-# catalog-vitu
-
-nephio test
+# catalog
+Nephio Package Catalog
