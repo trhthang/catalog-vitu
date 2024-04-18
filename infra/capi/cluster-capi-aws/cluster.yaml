@@ -978,5 +978,3 @@ metadata:
     type: generated
   name: aws-ebs-csi-driver-addon
   namespace: default
-
-  
