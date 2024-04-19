@@ -96,8 +96,24 @@ replacements:
       fieldPath: spec.clusterName
     targets:
       - select:
-          kind: KubeadmConfigTemplate
+          kind: MachineDeployment
         fieldPaths:
-          - metadata.name
-    options:
-      pattern: "{}-md-0"
+          - spec.template.spec.bootstrap.configRef.name
+  - source:
+      kind: WorkloadCluster
+      name: workload-cluster
+      fieldPath: spec.clusterName
+    targets:
+      - select:
+          kind: MachineDeployment
+        fieldPaths:
+          - spec.template.clusterName
+  - source:
+      kind: WorkloadCluster
+      name: workload-cluster
+      fieldPath: spec.clusterName
+    targets:
+      - select:
+          kind: MachineDeployment
+        fieldPaths:
+          - spec.template.infrastructureRef.name
