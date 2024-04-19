@@ -1,0 +1,103 @@
+apiVersion: fn.kpt.dev/v1alpha1
+kind: ApplyReplacements
+metadata:
+  name: update-cluster-references
+  annotations:
+    config.kubernetes.io/local-config: "true"
+replacements:
+  - source:
+      kind: WorkloadCluster
+      name: workload-cluster
+      fieldPath: spec.clusterName
+    targets:
+      - select:
+          kind: Cluster
+        fieldPaths:
+          - metadata.name
+          - spec.infrastructureRef.name
+  - source:
+      kind: WorkloadCluster
+      name: workload-cluster
+      fieldPath: spec.clusterName
+    targets:
+      - select:
+          kind: Cluster
+        fieldPaths:
+          - spec.controlPlaneRef.name
+    options:
+      pattern: "{}-control-plane"
+  - source:
+      kind: WorkloadCluster
+      name: workload-cluster
+      fieldPath: spec.clusterName
+    targets:
+      - select:
+          kind: AWSCluster
+        fieldPaths:
+          - metadata.name
+  - source:
+      kind: WorkloadCluster
+      name: workload-cluster
+      fieldPath: spec.clusterName
+    targets:
+      - select:
+          kind: KubeadmControlPlane
+        fieldPaths:
+          - metadata.name
+    options:
+      pattern: "{}-control-plane"
+  - source:
+      kind: WorkloadCluster
+      name: workload-cluster
+      fieldPath: spec.clusterName
+    targets:
+      - select:
+          kind: KubeadmControlPlane
+        fieldPaths:
+          - spec.machineTemplate.infrastructureRef.name
+    options:
+      pattern: "{}-control-plane"
+  - source:
+      kind: WorkloadCluster
+      name: workload-cluster
+      fieldPath: spec.clusterName
+    targets:
+      - select:
+          kind: AWSMachineTemplate
+        fieldPaths:
+          - metadata.name
+    options:
+      pattern: "{}-control-plane"
+  - source:
+      kind: WorkloadCluster
+      name: workload-cluster
+      fieldPath: spec.clusterName
+    targets:
+      - select:
+          kind: MachineDeployment
+        fieldPaths:
+          - metadata.name
+    options:
+      pattern: "{}-md-0"
+  - source:
+      kind: WorkloadCluster
+      name: workload-cluster
+      fieldPath: spec.clusterName
+    targets:
+      - select:
+          kind: AWSMachineTemplate
+        fieldPaths:
+          - metadata.name
+    options:
+      pattern: "{}-md-0"
+  - source:
+      kind: WorkloadCluster
+      name: workload-cluster
+      fieldPath: spec.clusterName
+    targets:
+      - select:
+          kind: KubeadmConfigTemplate
+        fieldPaths:
+          - metadata.name
+    options:
+      pattern: "{}-md-0"
