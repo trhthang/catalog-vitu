@@ -98,6 +98,15 @@ replacements:
       - select:
           kind: MachineDeployment
         fieldPaths:
+          - spec.clusterName
+  - source:
+      kind: WorkloadCluster
+      name: workload-cluster
+      fieldPath: spec.clusterName
+    targets:
+      - select:
+          kind: MachineDeployment
+        fieldPaths:
           - spec.template.spec.bootstrap.configRef.name
   - source:
       kind: WorkloadCluster
@@ -107,7 +116,7 @@ replacements:
       - select:
           kind: MachineDeployment
         fieldPaths:
-          - spec.template.clusterName
+          - spec.template.spec.clusterName
   - source:
       kind: WorkloadCluster
       name: workload-cluster
@@ -116,4 +125,4 @@ replacements:
       - select:
           kind: MachineDeployment
         fieldPaths:
-          - spec.template.infrastructureRef.name
+          - spec.template.spec.infrastructureRef.name
