@@ -34,6 +34,12 @@ source: |-
       if krmfn.match_gvk(r, "bootstrap.cluster.x-k8s.io/v1beta1", "KubeadmConfigTemplate"):
         if r["metadata"]["name"].endswith("-md-0"):
           r["metadata"]["name"] = new_cluster_name + "-md-0"
-          r["spec"]["template"]["spec"]["joinConfiguration"]["nodeRegistration"]["name"] = '{{ ds.meta_data.local_hostname }}'
+      if krmfn.match_gvk(r, "cluster.x-k8s.io/v1beta1", "MachineDeployment"):
+        if r["metadata"]["name"].endswith("-md-0"):
+          r["metadata"]["name"] = new_cluster_name + "-md-0"
+          r["spec"]["clusterName"] = new_cluster_name
+          r["spec"]["template"]["spec"]["clusterName"] = new_cluster_name
+          r["spec"]["template"]["spec"]["bootstrap"]["configRef"]["name"] = new_cluster_name + "-md-0"
+          r["spec"]["template"]["spec"]["infrastructureRef"]["name"] = new_cluster_name + "-md-0"
 
   set_values(ctx.resource_list["items"])
