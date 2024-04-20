@@ -1,0 +1,55 @@
+apiVersion: fn.kpt.dev/v1alpha1
+kind: ApplyReplacements
+metadata:
+  name: update-resource-names
+  annotations:
+    config.kubernetes.io/local-config: "true"
+replacements:
+  - source:
+      kind: WorkloadCluster
+      name: workload-cluster
+      fieldPath: spec.clusterName
+    targets:
+      - select:
+          kind: Cluster
+        fieldPaths:
+          - metadata.name
+          - spec.controlPlaneRef.name
+          - spec.infrastructureRef.name
+        options:
+          pattern: "{}"  # This will be replaced by the value of `spec.clusterName`
+      - select:
+          kind: AWSCluster
+        fieldPaths:
+          - metadata.name
+        options:
+          pattern: "{}"  # Use the same `spec.clusterName` for `AWSCluster` name
+      - select:
+          kind: KubeadmControlPlane
+        fieldPaths:
+          - metadata.name
+          - spec.machineTemplate.infrastructureRef.name
+        options:
+          pattern: "{}-control-plane"  # Append `-control-plane` to `spec.clusterName`
+      - select:
+          kind: AWSMachineTemplate
+          name: aws-nephio-control-plane
+        fieldPaths:
+          - metadata.name
+        options:
+          pattern: "{}-control-plane"  # For the control plane AWSMachineTemplate
+      - select:
+          kind: MachineDeployment
+        fieldPaths:
+          - metadata.name
+          - spec.template.spec.bootstrap.configRef.name
+          - spec.template.spec.infrastructureRef.name
+        options:
+          pattern: "{}-md-0"  # For the MachineDeployment and related templates
+      - select:
+          kind: AWSMachineTemplate
+          name: aws-nephio-md-0
+        fieldPaths:
+          - metadata.name
+        options:
+          pattern: "{}-md-0"  # For the worker node AWSMachineTemplate
