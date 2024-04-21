@@ -35,5 +35,5 @@ replacements:
   - select:
       kind: PackageVariant
     fieldPaths:
-    - spec.injectors.[kind=WorkloadCluster].name  # Để kiểm tra injectors với kind là WorkloadCluster
-    - metadata.labels  # Để áp dụng các labels từ nguồn
+    - spec.injectors.[kind=WorkloadCluster].name 
+    - metadata.labels
