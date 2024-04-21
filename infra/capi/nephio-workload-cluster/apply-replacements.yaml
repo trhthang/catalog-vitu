@@ -28,12 +28,3 @@ replacements:
     fieldPaths:
     - metadata.name
     - spec.clusterName
-- source:
-    kind: WorkloadCluster
-    fieldPath: metadata.labels
-  targets:
-  - select:
-      kind: PackageVariant
-    fieldPaths:
-    - spec.injectors.[kind=WorkloadCluster].name 
-    - metadata.labels
