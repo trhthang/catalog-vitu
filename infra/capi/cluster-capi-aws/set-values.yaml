@@ -6,7 +6,6 @@ metadata:
     config.kubernetes.io/local-config: "true"
 source: |-
   load("krmfn.star", "krmfn")
-
   def set_values(resources):
     # Initialize a variable to hold the new cluster name
     new_cluster_name = ""
@@ -41,25 +40,6 @@ source: |-
           r["spec"]["clusterName"] = new_cluster_name
           r["spec"]["template"]["spec"]["clusterName"] = new_cluster_name
           r["spec"]["template"]["spec"]["bootstrap"]["configRef"]["name"] = new_cluster_name + "-md-0"
-          r["spec"]["template"]["spec"]["infrastructureRef"]["name"] = new_cluster_name + "-md-0
-
-    # Find specific resources and rename them to include the new cluster name
-    fixed_resource_names = [
-      "crs-ccm",
-      "crs-csi",
-      "aws-ebs-csi-driver-addon",
-      "cloud-controller-manager-addon"
-    ]
-
-    for r in resources:
-      if krmfn.match_gvk(r, "addons.cluster.x-k8s.io/v1beta1", "ClusterResourceSet"):
-        name = r["metadata"]["name"]
-        if name in fixed_resource_names:
-          r["metadata"]["name"] = f"{new_cluster_name}-{name}"
-
-      elif krmfn.match_gvk(r, "v1", "ConfigMap"):
-        name = r["metadata"]["name"]
-        if name in fixed_resource_names:
-          r["metadata"]["name"] = f"{new_cluster_name}-{name}"
+          r["spec"]["template"]["spec"]["infrastructureRef"]["name"] = new_cluster_name + "-md-0"
 
   set_values(ctx.resource_list["items"])
