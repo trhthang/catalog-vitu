@@ -6,31 +6,39 @@ metadata:
     config.kubernetes.io/local-config: "true"
 source: |-
   load("krmfn.star", "krmfn")
+  import random
+  import string
+
+  def generate_random_string(length=8):
+    # Generate a random string with the specified length
+    return ''.join(random.choices(string.ascii_lowercase + string.digits, k=length))
 
   def set_values(resources):
-    # Initialize a variable to hold the new cluster name
-    new_cluster_name = ""
+    # Create a random string to use as the new unique name
+    new_name = generate_random_string()
 
-    # Find the WorkloadCluster and extract its cluster name
+    # Update ConfigMap with new name
     for r in resources:
-      if krmfn.match_gvk(r, "infra.nephio.org/v1alpha1", "WorkloadCluster"):
-        new_cluster_name = r["spec"]["clusterName"]
-        break  # Stop the loop once the cluster name is found
+      if krmfn.match_gvk(r, "v1", "ConfigMap"):
+        if r["metadata"]["name"] == "aws-ebs-csi-driver-addon":
+          r["metadata"]["name"] = new_name + "-aws-ebs-csi-driver-addon"
+        elif r["metadata"]["name"] == "cloud-controller-manager-addon":
+          r["metadata"]["name"] = new_name + "-cloud-controller-manager-addon"
 
-    # Update resource names with the new cluster name
+    # Update ClusterResourceSet with new name
     for r in resources:
-      # Update ClusterResourceSet names
       if krmfn.match_gvk(r, "addons.cluster.x-k8s.io/v1beta1", "ClusterResourceSet"):
         if r["metadata"]["name"] == "crs-ccm":
-          r["metadata"]["name"] = new_cluster_name + "-crs-ccm"
+          r["metadata"]["name"] = new_name + "-crs-ccm"
+          # Update associated resources
+          for resource in r["spec"]["resources"]:
+            if resource["kind"] == "ConfigMap" and resource["name"] == "cloud-controller-manager-addon":
+              resource["name"] = new_name + "-cloud-controller-manager-addon"
         elif r["metadata"]["name"] == "crs-csi":
-          r["metadata"]["name"] = new_cluster_name + "-crs-csi"
-
-      # Update ConfigMap names
-      if krmfn.match_gvk(r, "v1", "ConfigMap"):
-        if r["metadata"]["name"] == "cloud-controller-manager-addon":
-          r["metadata"]["name"] = new_cluster_name + "-cloud-controller-manager-addon"
-        elif r["metadata"]["name"] == "aws-ebs-csi-driver-addon":
-          r["metadata"]["name"] = new_cluster_name + "-aws-ebs-csi-driver-addon"
+          r["metadata"]["name"] = new_name + "-crs-csi"
+          # Update associated resources
+          for resource in r["spec"]["resources"]:
+            if resource["kind"] == "ConfigMap" and resource["name"] == "aws-ebs-csi-driver-addon":
+              resource["name"] = new_name + "-aws-ebs-csi-driver-addon"
 
   set_values(ctx.resource_list["items"])
