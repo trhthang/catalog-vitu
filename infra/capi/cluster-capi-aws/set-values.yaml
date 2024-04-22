@@ -6,7 +6,7 @@ metadata:
     config.kubernetes.io/local-config: "true"
 source: |-
   load("krmfn.star", "krmfn")
-  
+
   def set_values(resources):
     # Initialize a variable to hold the new cluster name
     new_cluster_name = ""
@@ -28,42 +28,38 @@ source: |-
         r["metadata"]["name"] = new_cluster_name + "-control-plane"
         r["spec"]["machineTemplate"]["infrastructureRef"]["name"] = new_cluster_name + "-control-plane"
       if krmfn.match_gvk(r, "infrastructure.cluster.x-k8s.io/v1beta2", "AWSMachineTemplate"):
-        if r["metadata"]["name"].ends_with("-control-plane"):
+        if r["metadata"]["name"].endswith("-control-plane"):
           r["metadata"]["name"] = new_cluster_name + "-control-plane"
-        elif r["metadata"]["name"].ends_with("-md-0"):
+        elif r["metadata"]["name"].endswith("-md-0"):
           r["metadata"]["name"] = new_cluster_name + "-md-0"
       if krmfn.match_gvk(r, "bootstrap.cluster.x-k8s.io/v1beta1", "KubeadmConfigTemplate"):
-        if r["metadata"]["name"].ends_with("-md-0"):
+        if r["metadata"]["name"].endswith("-md-0"):
           r["metadata"]["name"] = new_cluster_name + "-md-0"
       if krmfn.match_gvk(r, "cluster.x-k8s.io/v1beta1", "MachineDeployment"):
-        if r["metadata"]["name"].ends_with("-md-0"):
+        if r["metadata"]["name"].endswith("-md-0"):
           r["metadata"]["name"] = new_cluster_name + "-md-0"
           r["spec"]["clusterName"] = new_cluster_name
           r["spec"]["template"]["spec"]["clusterName"] = new_cluster_name
-          r["spec"]["template"]["spec"]["bootstrap"]["configRef"]["name"] = new_cluster_name + "-md-0
+          r["spec"]["template"]["spec"]["bootstrap"]["configRef"]["name"] = new_cluster_name + "-md-0"
           r["spec"]["template"]["spec"]["infrastructureRef"]["name"] = new_cluster_name + "-md-0
 
-    # Ensure unique names for specific resources
-    resource_counters = {
-      "crs-ccm": 0,
-      "crs-csi": 0,
-      "aws-ebs-csi-driver-addon": 0,
-      "cloud-controller-manager-addon": 0
-    }
+    # Find specific resources and rename them to include the new cluster name
+    fixed_resource_names = [
+      "crs-ccm",
+      "crs-csi",
+      "aws-ebs-csi-driver-addon",
+      "cloud-controller-manager-addon"
+    ]
 
-    # Loop through resources to update names and ensure uniqueness
     for r in resources:
       if krmfn.match_gvk(r, "addons.cluster.x-k8s.io/v1beta1", "ClusterResourceSet"):
         name = r["metadata"]["name"]
-        if name in resource_counters:
-          resource_counters[name] += 1
-          r["metadata"]["name"] = f"{name}-{resource_counters[name]}"
+        if name in fixed_resource_names:
+          r["metadata"]["name"] = f"{new_cluster_name}-{name}"
 
       elif krmfn.match_gvk(r, "v1", "ConfigMap"):
         name = r["metadata"]["name"]
-        if name in resource_counters:
-          resource_counters[name] += 1
-          r["metadata"]["name"] = f"{name}-{resource_counters[name]}"
+        if name in fixed_resource_names:
+          r["metadata"]["name"] = f"{new_cluster_name}-{name}"
 
-  # Apply changes to the resource list
   set_values(ctx.resource_list["items"])
