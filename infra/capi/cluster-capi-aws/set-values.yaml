@@ -7,35 +7,47 @@ metadata:
 source: |-
   load("krmfn.star", "krmfn")
 
+  # Define the set_values function to update resource names
   def set_values(resources):
     # Initialize a variable to hold the new cluster name
     new_cluster_name = ""
-    
+
     # Find the WorkloadCluster and extract the cluster name
     for r in resources:
       if krmfn.match_gvk(r, "infra.nephio.org/v1alpha1", "WorkloadCluster"):
         new_cluster_name = r["spec"]["clusterName"]
         break  # Stop the loop once the cluster name is found
 
-    # Apply the new cluster name to the Cluster, AWSCluster, KubeadmControlPlane, and AWSMachineTemplate resources
+    # Apply the new cluster name to various resources
     for r in resources:
+      # Update Cluster names
       if krmfn.match_gvk(r, "cluster.x-k8s.io/v1beta1", "Cluster"):
         r["metadata"]["name"] = new_cluster_name
         r["spec"]["controlPlaneRef"]["name"] = new_cluster_name + "-control-plane"
         r["spec"]["infrastructureRef"]["name"] = new_cluster_name
+      
+      # Update AWSCluster names
       if krmfn.match_gvk(r, "infrastructure.cluster.x-k8s.io/v1beta2", "AWSCluster"):
         r["metadata"]["name"] = new_cluster_name
+      
+      # Update KubeadmControlPlane names
       if krmfn.match_gvk(r, "controlplane.cluster.x-k8s.io/v1beta1", "KubeadmControlPlane"):
         r["metadata"]["name"] = new_cluster_name + "-control-plane"
         r["spec"]["machineTemplate"]["infrastructureRef"]["name"] = new_cluster_name + "-control-plane"
+      
+      # Update AWSMachineTemplate names
       if krmfn.match_gvk(r, "infrastructure.cluster.x-k8s.io/v1beta2", "AWSMachineTemplate"):
         if r["metadata"]["name"].endswith("-control-plane"):
           r["metadata"]["name"] = new_cluster_name + "-control-plane"
         elif r["metadata"]["name"].endswith("-md-0"):
           r["metadata"]["name"] = new_cluster_name + "-md-0"
+
+      # Update KubeadmConfigTemplate names
       if krmfn.match_gvk(r, "bootstrap.cluster.x-k8s.io/v1beta1", "KubeadmConfigTemplate"):
         if r["metadata"]["name"].endswith("-md-0"):
           r["metadata"]["name"] = new_cluster_name + "-md-0"
+
+      # Update MachineDeployment names
       if krmfn.match_gvk(r, "cluster.x-k8s.io/v1beta1", "MachineDeployment"):
         if r["metadata"]["name"].endswith("-md-0"):
           r["metadata"]["name"] = new_cluster_name + "-md-0"
@@ -44,20 +56,28 @@ source: |-
           r["spec"]["template"]["spec"]["bootstrap"]["configRef"]["name"] = new_cluster_name + "-md-0"
           r["spec"]["template"]["spec"]["infrastructureRef"]["name"] = new_cluster_name + "-md-0"
 
-    # Apply the new cluster name to the ClusterResourceSet and ConfigMap resources
-    for r in resources:
-      # Update ClusterResourceSet names
+      # Update ConfigMap names
+      if krmfn.match_gvk(r, "v1", "ConfigMap"):
+        if r["metadata"]["name"] == "cloud-controller-manager-addon":
+          r["metadata"]["name"] = new_cluster_name + "-cloud-controller-manager-addon"
+        elif r["metadata"]["name"] == "aws-ebs-csi-driver-addon":
+          r["metadata"]["name"] = new_cluster_name + "-aws-ebs-csi-driver-addon"
+
+      # Update ClusterResourceSet names and associated ConfigMaps
       if krmfn.match_gvk(r, "addons.cluster.x-k8s.io/v1beta1", "ClusterResourceSet"):
         if r["metadata"]["name"] == "crs-ccm":
           r["metadata"]["name"] = new_cluster_name + "-crs-ccm"
+          # Update resource names within ClusterResourceSet
+          for resource in r["spec"]["resources"]:
+            if resource["kind"] == "ConfigMap" and resource["name"] == "cloud-controller-manager-addon":
+              resource["name"] = new_cluster_name + "-cloud-controller-manager-addon"
+        
         elif r["metadata"]["name"] == "crs-csi":
           r["metadata"]["name"] = new_cluster_name + "-crs-csi"
+          # Update resource names within ClusterResourceSet
+          for resource in r["spec"]["resources"]:
+            if resource["kind"] == "ConfigMap" and resource["name"] == "aws-ebs-csi-driver-addon":
+              resource["name"] = new_cluster_name + "-aws-ebs-csi-driver-addon"
 
-      # Update ConfigMap names
-      if krmfn.match_gvk(r, "v1", "ConfigMap"):
-        if r["metadata"]["name"] == "aws-ebs-csi-driver-addon":
-          r["metadata"]["name"] = new_cluster_name + "-aws-ebs-csi-driver-addon"
-        elif r["metadata"]["name"] == "cloud-controller-manager-addon":
-          r["metadata"]["name"] = new_cluster_name + "-cloud-controller-manager-addon"
-
+  # Call the set_values function with the list of Kubernetes resources
   set_values(ctx.resource_list["items"])
