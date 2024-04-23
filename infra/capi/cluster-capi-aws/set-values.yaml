@@ -10,8 +10,10 @@ source: |-
   def set_values(resources):
     for r in resources:
       if krmfn.match_gvk(r, "v1", "ConfigMap") and krmfn.match_name(r, "kptfile.kpt.dev"):
-        new_cluster_name = r["metadata"]["annotations"]["nephio.org/cluster-name"]
-
+        new_cluster_name = r["data"]["name"]
+    for r in resources:
+      if krmfn.match_gvk(r, "infra.nephio.org/v1alpha1", "WorkloadCluster"):
+        new_cluster_name = r["spec"]["clusterName"]
     # Apply the new cluster name to the Cluster, AWSCluster, KubeadmControlPlane, and AWSMachineTemplate resources
     for r in resources:
       if krmfn.match_gvk(r, "cluster.x-k8s.io/v1beta1", "Cluster"):
