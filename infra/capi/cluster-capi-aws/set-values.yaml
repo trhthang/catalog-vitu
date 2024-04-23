@@ -44,36 +44,42 @@ source: |-
 
   set_values1(ctx.resource_list["items"])
 
+  def generate_unique_string(length=8):
+    base_string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    unique_str = ""
+    base_var = 123456789  # Một giá trị cơ bản để đảm bảo thay đổi
+    
+    memory_address = id(base_var)  # Lấy địa chỉ bộ nhớ
+    for i in range(length):
+        index = (memory_address + i) % len(base_string)  # Chỉ số trong phạm vi base_string
+        unique_str += base_string[index]
+
+    return unique_str
+
   def set_values2(resources):
-    # Initialize a variable to hold the new cluster name
-    new_cluster_name = ""
-    # Find the WorkloadCluster and extract the cluster name
-    for r in resources:
-      if krmfn.match_gvk(r, "infra.nephio.org/v1alpha1", "WorkloadCluster"):
-        new_cluster_name = r["spec"]["clusterName"]
-        break  # Stop the loop once the cluster name is found
+    new_name = generate_unique_string(8)
 
     # Update ConfigMap with new name
     for r in resources:
       if krmfn.match_gvk(r, "v1", "ConfigMap"):
         if r["metadata"]["name"] == "aws-ebs-csi-driver-addon":
-          r["metadata"]["name"] = new_cluster_name + "-aws-ebs-csi-driver-addon"
+          r["metadata"]["name"] = new_name + "-aws-ebs-csi-driver-addon"
         elif r["metadata"]["name"] == "cloud-controller-manager-addon":
-          r["metadata"]["name"] = new_cluster_name + "-cloud-controller-manager-addon"
+          r["metadata"]["name"] = new_name + "-cloud-controller-manager-addon"
 
     for r in resources:
       if krmfn.match_gvk(r, "addons.cluster.x-k8s.io/v1beta1", "ClusterResourceSet"):
         if r["metadata"]["name"] == "crs-ccm":
-          r["metadata"]["name"] = new_cluster_name + "-crs-ccm"
+          r["metadata"]["name"] = new_name + "-crs-ccm"
           # Update associated resources
           for resource in r["spec"]["resources"]:
             if resource["kind"] == "ConfigMap" and resource["name"] == "cloud-controller-manager-addon":
-              resource["name"] = new_cluster_name + "-cloud-controller-manager-addon"
+              resource["name"] = new_name + "-cloud-controller-manager-addon"
         elif r["metadata"]["name"] == "crs-csi":
-          r["metadata"]["name"] = new_cluster_name + "-crs-csi"
+          r["metadata"]["name"] = new_name + "-crs-csi"
           # Update associated resources
           for resource in r["spec"]["resources"]:
             if resource["kind"] == "ConfigMap" and resource["name"] == "aws-ebs-csi-driver-addon":
-              resource["name"] = new_cluster_name + "-aws-ebs-csi-driver-addon"
+              resource["name"] = new_name + "-aws-ebs-csi-driver-addon"
 
   set_values2(ctx.resource_list["items"])
