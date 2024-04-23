@@ -58,9 +58,10 @@ source: |-
 
     return random_string
 
+  def set_values2(resources):
     for r in resources:
       new_name = generate_random_string() 
-          
+
       if krmfn.match_gvk(r, "v1", "ConfigMap"):
         if r["metadata"]["name"] == "aws-ebs-csi-driver-addon":
           r["metadata"]["name"] = new_name + "-aws-ebs-csi-driver-addon"
