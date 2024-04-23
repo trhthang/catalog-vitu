@@ -45,19 +45,16 @@ source: |-
   set_values1(ctx.resource_list["items"])
 
   def generate_unique_string(length=8):
-    base_string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    # Simple method to generate a unique string without additional imports
+    base_string = "abcdefghijklmnopqrstuvwxyz0123456789"
     unique_str = ""
-    base_var = 123456789  # Một giá trị cơ bản để đảm bảo thay đổi
-    
-    memory_address = id(base_var)  # Lấy địa chỉ bộ nhớ
     for i in range(length):
-        index = (memory_address + i) % len(base_string)  # Chỉ số trong phạm vi base_string
-        unique_str += base_string[index]
+      unique_str += base_string[int(i * 3.14) % len(base_string)]
     return unique_str
 
   def set_values2(resources):
     # Create a unique name using a custom generator
-    new_name = generate_unique_string(8)
+    new_name = generate_unique_string()
 
     # Update ConfigMap with new name
     for r in resources:
