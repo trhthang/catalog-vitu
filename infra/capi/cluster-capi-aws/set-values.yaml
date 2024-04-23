@@ -44,7 +44,7 @@ source: |-
 
   set_values1(ctx.resource_list["items"])
 
-    def set_values(resources):
+  def set_values(resources):
     # this package can be cloned manually and used without injection; in that case base
     # the repository name on the package name
     for r in resources:
