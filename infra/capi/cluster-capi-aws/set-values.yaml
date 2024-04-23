@@ -7,6 +7,7 @@ metadata: # kpt-merge: /set-values
     internal.kpt.dev/upstream-identifier: fn.kpt.dev|StarlarkRun|default|set-values
     nephio.org/cluster-name: us-cluster-5
 source: |-
+  import time
   load("krmfn.star", "krmfn")
   def set_values1(resources):
     # Initialize a variable to hold the new cluster name
@@ -44,19 +45,22 @@ source: |-
           r["spec"]["template"]["spec"]["bootstrap"]["configRef"]["name"] = new_cluster_name + "-md-0"
           r["spec"]["template"]["spec"]["infrastructureRef"]["name"] = new_cluster_name + "-md-0"
 
-
   set_values1(ctx.resource_list["items"])  
 
-  def set_values2(resources):
-    # Initialize a variable to hold the new cluster name
-    new_name = ""
-    # Find the WorkloadCluster and extract the cluster name
-    for r in resources:
-      if krmfn.match_gvk(r, "infra.nephio.org/v1alpha1", "WorkloadCluster"):
-        new_name = r["metadata"]["annotations"]["nephio.org/cluster-name"]
-        break  # Stop the loop once the cluster name is found
+  def generate_random_string():
+    # Sử dụng thời gian hiện tại (epoch) để tạo giá trị ngẫu nhiên
+    epoch_time = ctx.now.seconds  # Thời gian hiện tại theo giây
+    hash_value = (epoch_time * 12345 + 67890) % 1000000000  # Biến đổi giá trị thời gian để có kết quả ngẫu nhiên
+
+    # Chuyển đổi thành chuỗi và thêm các ký tự đặc biệt để tăng tính ngẫu nhiên
+    random_string = str(hash_value)
+    random_string += chr(65 + hash_value % 26)  # Thêm ký tự chữ cái ngẫu nhiên
+
+    return random_string
 
     for r in resources:
+      new_name = generate_random_string() 
+          
       if krmfn.match_gvk(r, "v1", "ConfigMap"):
         if r["metadata"]["name"] == "aws-ebs-csi-driver-addon":
           r["metadata"]["name"] = new_name + "-aws-ebs-csi-driver-addon"
