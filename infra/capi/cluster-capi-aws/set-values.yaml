@@ -7,20 +7,10 @@ metadata:
 source: |-
   load("krmfn.star", "krmfn")
 
-  def extract_initial_segments(name):
-    # Chia chuỗi thành các phần dựa trên dấu "-"
-    parts = name.split("-")
-
-    # Lấy 3 phần tử đầu tiên và nối lại bằng dấu "-"
-    first_three_parts = "-".join(parts[:3])
-
-    return first_three_parts
-
   def set_values(resources):
     for r in resources:
       if krmfn.match_gvk(r, "v1", "ConfigMap") and krmfn.match_name(r, "kptfile.kpt.dev"):
-        raw_name = r["data"]["name"]
-        new_cluster_name = extract_initial_segments(raw_name)
+        new_cluster_name = r["metadata"]["annotations"]["nephio.org/cluster-name"]
 
     # Apply the new cluster name to the Cluster, AWSCluster, KubeadmControlPlane, and AWSMachineTemplate resources
     for r in resources:
