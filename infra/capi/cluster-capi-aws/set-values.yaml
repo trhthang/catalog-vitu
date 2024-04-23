@@ -42,40 +42,38 @@ source: |-
           r["spec"]["template"]["spec"]["bootstrap"]["configRef"]["name"] = new_cluster_name + "-md-0"
           r["spec"]["template"]["spec"]["infrastructureRef"]["name"] = new_cluster_name + "-md-0"
 
-  def generate_random_string():
-    # Tạo giá trị ngẫu nhiên từ thời gian hiện tại
-    epoch_time = int(ctx.now.seconds)  # Thời gian hiện tại tính theo giây
-    hash_value = (epoch_time * 12345 + 67890) % 1000000000  # Sử dụng các phép toán đơn giản để tạo giá trị ngẫu nhiên
-    
-    # Chuyển đổi thành chuỗi và thêm ký tự đặc biệt để tăng tính ngẫu nhiên
-    random_string = str(hash_value)
-    random_string += chr(65 + hash_value % 26)  # Thêm một ký tự chữ cái ngẫu nhiên
-    
-    return random_string
-  
-    def set_values2(resources):
-    # Sử dụng chuỗi ngẫu nhiên mới để đặt tên các tài nguyên
+  set_values1(ctx.resource_list["items"])
+
+    def set_values(resources):
+    # this package can be cloned manually and used without injection; in that case base
+    # the repository name on the package name
     for r in resources:
-      new_name = generate_random_string()  # Sử dụng hàm ngẫu nhiên mới
-      
+      if krmfn.match_gvk(r, "v1", "ConfigMap") and krmfn.match_name(r, "kptfile.kpt.dev"):
+        clusterName = r["data"]["name"]
       if krmfn.match_gvk(r, "v1", "ConfigMap"):
         if r["metadata"]["name"] == "aws-ebs-csi-driver-addon":
-          r["metadata"]["name"] = new_name + "-aws-ebs-csi-driver-addon"
+          r["metadata"]["name"] = clusterName + "-aws-ebs-csi-driver-addon"
         elif r["metadata"]["name"] == "cloud-controller-manager-addon":
-          r["metadata"]["name"] = new_name + "-cloud-controller-manager-addon"
+          r["metadata"]["name"] = clusterName + "-cloud-controller-manager-addon"
       if krmfn.match_gvk(r, "addons.cluster.x-k8s.io/v1beta1", "ClusterResourceSet"):
         if r["metadata"]["name"] == "crs-ccm":
-          r["metadata"]["name"] = new_name + "-crs-ccm"
-          # Cập nhật các tài nguyên liên quan
+          r["metadata"]["name"] = clusterName + "-crs-ccm"
+          # Update associated resources
           for resource in r["spec"]["resources"]:
-            if resource["kind"] == "ConfigMap" và resource["name"] == "cloud-controller-manager-addon":
-              resource["name"] = new_name + "-cloud-controller-manager-addon"
+            if resource["kind"] == "ConfigMap" and resource["name"] == "cloud-controller-manager-addon":
+              resource["name"] = clusterName + "-cloud-controller-manager-addon"
+      if krmfn.match_gvk(r, "addons.cluster.x-k8s.io/v1beta1", "ClusterResourceSet"):
+        if r["metadata"]["name"] == "crs-ccm":
+          r["metadata"]["name"] = clusterName + "-crs-ccm"
+          # Update associated resources
+          for resource in r["spec"]["resources"]:
+            if resource["kind"] == "ConfigMap" and resource["name"] == "cloud-controller-manager-addon":
+              resource["name"] = clusterName + "-cloud-controller-manager-addon"
         elif r["metadata"]["name"] == "crs-csi":
-          r["metadata"]["name"] = new_name + "-crs-csi"
-          # Cập nhật các tài nguyên liên quan
+          r["metadata"]["name"] = clusterName + "-crs-csi"
+          # Update associated resources
           for resource in r["spec"]["resources"]:
-            if resource["kind"] == "ConfigMap" và resource["name"] == "aws-ebs-csi-driver-addon":
-              resource["name"] = new_name + "-aws-ebs-csi-driver-addon"
+            if resource["kind"] == "ConfigMap" and resource["name"] == "aws-ebs-csi-driver-addon":
+              resource["name"] = clusterName + "-aws-ebs-csi-driver-addon"
 
-  set_values1(ctx.resource_list["items"])  
   set_values2(ctx.resource_list["items"])
