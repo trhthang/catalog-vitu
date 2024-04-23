@@ -6,7 +6,7 @@ metadata:
     config.kubernetes.io/local-config: "true"
 source: |-
   load("krmfn.star", "krmfn")
-  def set_values1(resources):
+  def set_values(resources):
     # Initialize a variable to hold the new cluster name
     new_cluster_name = ""
     # Find the WorkloadCluster and extract the cluster name
@@ -42,41 +42,4 @@ source: |-
           r["spec"]["template"]["spec"]["bootstrap"]["configRef"]["name"] = new_cluster_name + "-md-0"
           r["spec"]["template"]["spec"]["infrastructureRef"]["name"] = new_cluster_name + "-md-0"
 
-  set_values1(ctx.resource_list["items"])
-
-  def generate_unique_string(length=8):
-    # Simple method to generate a unique string without additional imports
-    base_string = "abcdefghijklmnopqrstuvwxyz0123456789"
-    unique_str = ""
-    for i in range(length):
-      unique_str += base_string[int(i * 3.14) % len(base_string)]
-    return unique_str
-
-  def set_values2(resources):
-    # Create a unique name using a custom generator
-    new_name = generate_unique_string()
-
-    # Update ConfigMap with new name
-    for r in resources:
-      if krmfn.match_gvk(r, "v1", "ConfigMap"):
-        if r["metadata"]["name"] == "aws-ebs-csi-driver-addon":
-          r["metadata"]["name"] = new_name + "-aws-ebs-csi-driver-addon"
-        elif r["metadata"]["name"] == "cloud-controller-manager-addon":
-          r["metadata"]["name"] = new_name + "-cloud-controller-manager-addon"
-
-    for r in resources:
-      if krmfn.match_gvk(r, "addons.cluster.x-k8s.io/v1beta1", "ClusterResourceSet"):
-        if r["metadata"]["name"] == "crs-ccm":
-          r["metadata"]["name"] = new_name + "-crs-ccm"
-          # Update associated resources
-          for resource in r["spec"]["resources"]:
-            if resource["kind"] == "ConfigMap" and resource["name"] == "cloud-controller-manager-addon":
-              resource["name"] = new_name + "-cloud-controller-manager-addon"
-        elif r["metadata"]["name"] == "crs-csi":
-          r["metadata"]["name"] = new_name + "-crs-csi"
-          # Update associated resources
-          for resource in r["spec"]["resources"]:
-            if resource["kind"] == "ConfigMap" and resource["name"] == "aws-ebs-csi-driver-addon":
-              resource["name"] = new_name + "-aws-ebs-csi-driver-addon"
-
-  set_values2(ctx.resource_list["items"])
+  set_values(ctx.resource_list["items"])
