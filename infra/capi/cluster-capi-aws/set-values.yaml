@@ -43,21 +43,21 @@ source: |-
           r["spec"]["template"]["spec"]["infrastructureRef"]["name"] = new_cluster_name + "-md-0"
       if krmfn.match_gvk(r, "v1", "ConfigMap"):
         if r["metadata"]["name"] == "aws-ebs-csi-driver-addon":
-          r["metadata"]["name"] = new_name + "-aws-ebs-csi-driver-addon"
+          r["metadata"]["name"] = new_cluster_name + "-aws-ebs-csi-driver-addon"
         elif r["metadata"]["name"] == "cloud-controller-manager-addon":
-          r["metadata"]["name"] = new_name + "-cloud-controller-manager-addon"
+          r["metadata"]["name"] = new_cluster_name + "-cloud-controller-manager-addon"
       if krmfn.match_gvk(r, "addons.cluster.x-k8s.io/v1beta1", "ClusterResourceSet"):
         if r["metadata"]["name"] == "crs-ccm":
-          r["metadata"]["name"] = new_name + "-crs-ccm"
+          r["metadata"]["name"] = new_cluster_name + "-crs-ccm"
           # Update associated resources
           for resource in r["spec"]["resources"]:
             if resource["kind"] == "ConfigMap" and resource["name"] == "cloud-controller-manager-addon":
-              resource["name"] = new_name + "-cloud-controller-manager-addon"
+              resource["name"] = new_cluster_name + "-cloud-controller-manager-addon"
         elif r["metadata"]["name"] == "crs-csi":
-          r["metadata"]["name"] = new_name + "-crs-csi"
+          r["metadata"]["name"] = new_cluster_name + "-crs-csi"
           # Update associated resources
           for resource in r["spec"]["resources"]:
             if resource["kind"] == "ConfigMap" and resource["name"] == "aws-ebs-csi-driver-addon":
-              resource["name"] = new_name + "-aws-ebs-csi-driver-addon"
+              resource["name"] = new_cluster_name + "-aws-ebs-csi-driver-addon"
 
   set_values(ctx.resource_list["items"])
