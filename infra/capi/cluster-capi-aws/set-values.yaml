@@ -12,10 +12,6 @@ source: |-
     for r in resources:
       if krmfn.match_gvk(r, "v1", "ConfigMap") and krmfn.match_name(r, "kptfile.kpt.dev"):
         clusterName = r["data"]["name"]
-    # if a WorkloadCluster exists, and was injected, then use that for the name
-    for r in resources:
-      if krmfn.match_gvk(r, "infra.nephio.org/v1alpha1", "WorkloadCluster"):
-        clusterName = r["spec"]["clusterName"]
     for r in resources:
       if krmfn.match_gvk(r, "cluster.x-k8s.io/v1beta1", "Cluster"):
         r["metadata"]["name"] = new_cluster_name
