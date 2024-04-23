@@ -6,48 +6,36 @@ metadata:
     config.kubernetes.io/local-config: "true"
 source: |-
   load("krmfn.star", "krmfn")
-
-  def generate_unique_string(length=8):
-    base_string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-    unique_str = ""
-    base_var = 123456789  # Một giá trị cơ bản để đảm bảo thay đổi
-    
-    memory_address = id(base_var)  # Lấy địa chỉ bộ nhớ
-    for i in range(length):
-      index = (memory_address + i) % len(base_string)  # Chỉ số trong phạm vi base_string
-      unique_str += base_string[index]
-
-    return unique_str
-
   def set_values1(resources):
-    new_cluster_name = ""  # Biến chứa tên cụm mới
-    # Tìm WorkloadCluster và lấy tên cụm
+    # Initialize a variable to hold the new cluster name
+    new_cluster_name = ""
+    # Find the WorkloadCluster and extract the cluster name
     for r in resources:
       if krmfn.match_gvk(r, "infra.nephio.org/v1alpha1", "WorkloadCluster"):
         new_cluster_name = r["spec"]["clusterName"]
-        break  # Dừng vòng lặp khi đã tìm được tên cụm
+        break  # Stop the loop once the cluster name is found
 
-    # Áp dụng tên cụm mới cho các tài nguyên khác
+    # Apply the new cluster name to the Cluster, AWSCluster, KubeadmControlPlane, and AWSMachineTemplate resources
     for r in resources:
       if krmfn.match_gvk(r, "cluster.x-k8s.io/v1beta1", "Cluster"):
         r["metadata"]["name"] = new_cluster_name
         r["spec"]["controlPlaneRef"]["name"] = new_cluster_name + "-control-plane"
         r["spec"]["infrastructureRef"]["name"] = new_cluster_name
-      elif krmfn.match_gvk(r, "infrastructure.cluster.x-k8s.io/v1beta2", "AWSCluster"):
+      if krmfn.match_gvk(r, "infrastructure.cluster.x-k8s.io/v1beta2", "AWSCluster"):
         r["metadata"]["name"] = new_cluster_name
-      elif krmfn.match_gvk(r, "controlplane.cluster.x-k8s.io/v1beta1", "KubeadmControlPlane"):
+      if krmfn.match_gvk(r, "controlplane.cluster.x-k8s.io/v1beta1", "KubeadmControlPlane"):
         r["metadata"]["name"] = new_cluster_name + "-control-plane"
         r["spec"]["machineTemplate"]["infrastructureRef"]["name"] = new_cluster_name + "-control-plane"
-      elif krmfn.match_gvk(r, "infrastructure.cluster.x-k8s.io/v1beta2", "AWSMachineTemplate"):
-        if r["metadata"]["name"].ends with("-control-plane"):
+      if krmfn.match_gvk(r, "infrastructure.cluster.x-k8s.io/v1beta2", "AWSMachineTemplate"):
+        if r["metadata"]["name"].endswith("-control-plane"):
           r["metadata"]["name"] = new_cluster_name + "-control-plane"
-        elif r["metadata"]["name"].ends with("-md-0"):
+        elif r["metadata"]["name"].endswith("-md-0"):
           r["metadata"]["name"] = new_cluster_name + "-md-0"
-      elif krmfn.match_gvk(r, "bootstrap.cluster.x-k8s.io/v1beta1", "KubeadmConfigTemplate"):
-        if r["metadata"]["name"].ends với "-md-0":
+      if krmfn.match_gvk(r, "bootstrap.cluster.x-k8s.io/v1beta1", "KubeadmConfigTemplate"):
+        if r["metadata"]["name"].endswith("-md-0"):
           r["metadata"]["name"] = new_cluster_name + "-md-0"
-      elif krmfn.match_gvk(r, "cluster.x-k8s.io/v1beta1", "MachineDeployment"):
-        if r["metadata"]["name"].ends với "-md-0":
+      if krmfn.match_gvk(r, "cluster.x-k8s.io/v1beta1", "MachineDeployment"):
+        if r["metadata"]["name"].endswith("-md-0"):
           r["metadata"]["name"] = new_cluster_name + "-md-0"
           r["spec"]["clusterName"] = new_cluster_name
           r["spec"]["template"]["spec"]["clusterName"] = new_cluster_name
@@ -56,10 +44,22 @@ source: |-
 
   set_values1(ctx.resource_list["items"])
 
+  def generate_unique_string(length=8):
+    base_string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    unique_str = ""
+    base_var = 123456789  # Một giá trị cơ bản để đảm bảo thay đổi
+    
+    memory_address = id(base_var)  # Lấy địa chỉ bộ nhớ
+    for i in range(length):
+        index = (memory_address + i) % len(base_string)  # Chỉ số trong phạm vi base_string
+        unique_str += base_string[index]
+    return unique_str
+
   def set_values2(resources):
+    # Create a unique name using a custom generator
     new_name = generate_unique_string(8)
 
-    # Cập nhật ConfigMap với tên mới
+    # Update ConfigMap with new name
     for r in resources:
       if krmfn.match_gvk(r, "v1", "ConfigMap"):
         if r["metadata"]["name"] == "aws-ebs-csi-driver-addon":
@@ -71,13 +71,15 @@ source: |-
       if krmfn.match_gvk(r, "addons.cluster.x-k8s.io/v1beta1", "ClusterResourceSet"):
         if r["metadata"]["name"] == "crs-ccm":
           r["metadata"]["name"] = new_name + "-crs-ccm"
+          # Update associated resources
           for resource in r["spec"]["resources"]:
             if resource["kind"] == "ConfigMap" and resource["name"] == "cloud-controller-manager-addon":
               resource["name"] = new_name + "-cloud-controller-manager-addon"
         elif r["metadata"]["name"] == "crs-csi":
           r["metadata"]["name"] = new_name + "-crs-csi"
+          # Update associated resources
           for resource in r["spec"]["resources"]:
-            if resource["kind"] == "ConfigMap" và resource["name"] == "aws-ebs-csi-driver-addon":
+            if resource["kind"] == "ConfigMap" and resource["name"] == "aws-ebs-csi-driver-addon":
               resource["name"] = new_name + "-aws-ebs-csi-driver-addon"
 
   set_values2(ctx.resource_list["items"])
