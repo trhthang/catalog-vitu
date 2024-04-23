@@ -6,39 +6,51 @@ metadata:
     config.kubernetes.io/local-config: "true"
 source: |-
   load("krmfn.star", "krmfn")
+
+  # Kiểm tra và thiết lập tên cụm (clusterName)
   def set_values(resources):
-    # this package can be cloned manually and used without injection; in that case base
-    # the repository name on the package name
+    clusterName = None  # Khởi tạo với giá trị mặc định
+
+    # Lấy tên cụm từ `ConfigMap` nếu có
     for r in resources:
       if krmfn.match_gvk(r, "v1", "ConfigMap") and krmfn.match_name(r, "kptfile.kpt.dev"):
         clusterName = r["data"]["name"]
-    # if a WorkloadCluster exists, and was injected, then use that for the name
+
+    # Hoặc lấy tên từ `WorkloadCluster`
     for r in resources:
       if krmfn.match_gvk(r, "infra.nephio.org/v1alpha1", "WorkloadCluster"):
         clusterName = r["spec"]["clusterName"]
-    for r in resources:
-      if krmfn.match_gvk(r, "cluster.x-k8s.io/v1beta1", "Cluster"):
-        r["metadata"]["name"] = clusterName
-        r["spec"]["controlPlaneRef"]["name"] = clusterName + "-control-plane"
-        r["spec"]["infrastructureRef"]["name"] = clusterName
-      if krmfn.match_gvk(r, "infrastructure.cluster.x-k8s.io/v1beta2", "AWSCluster"):
-        r["metadata"]["name"] = clusterName
-      if krmfn.match_gvk(r, "controlplane.cluster.x-k8s.io/v1beta1", "KubeadmControlPlane"):
-        r["metadata"]["name"] = clusterName + "-control-plane"
-        r["spec"]["machineTemplate"]["infrastructureRef"]["name"] = clusterName + "-control-plane"
-      if krmfn.match_gvk(r, "infrastructure.cluster.x-k8s.io/v1beta2", "AWSMachineTemplate"):
-        if r["metadata"]["name"].endswith("-control-plane"):
+
+    if clusterName:  # Chỉ thực hiện nếu `clusterName` đã được khởi tạo
+      for r in resources:
+        if krmfn.match_gvk(r, "cluster.x-k8s.io/v1beta1", "Cluster"):
+          r["metadata"]["name"] = clusterName
+          r["spec"]["controlPlaneRef"]["name"] = clusterName + "-control-plane"
+          r["spec"]["infrastructureRef"]["name"] = clusterName
+
+        if krmfn.match_gvk(r, "infrastructure.cluster.x-k8s.io/v1beta2", "AWSCluster"):
+          r["metadata"]["name"] = clusterName
+
+        if krmfn.match_gvk(r, "controlplane.cluster.x-k8s.io/v1beta1", "KubeadmControlPlane"):
           r["metadata"]["name"] = clusterName + "-control-plane"
-        elif r["metadata"]["name"].endswith("-md-0"):
-          r["metadata"]["name"] = clusterName + "-md-0"
-      if krmfn.match_gvk(r, "bootstrap.cluster.x-k8s.io/v1beta1", "KubeadmConfigTemplate"):
-        if r["metadata"]["name"].endswith("-md-0"):
-          r["metadata"]["name"] = clusterName + "-md-0"
-      if krmfn.match_gvk(r, "cluster.x-k8s.io/v1beta1", "MachineDeployment"):
-        if r["metadata"]["name"].endswith("-md-0"):
-          r["metadata"]["name"] = clusterName + "-md-0"
-          r["spec"]["clusterName"] = new_cluster_name
-          r["spec"]["template"]["spec"]["clusterName"] = clusterName
-          r["spec"]["template"]["spec"]["bootstrap"]["configRef"]["name"] = clusterName + "-md-0"
-          r["spec"]["template"]["spec"]["infrastructureRef"]["name"] = clusterName + "-md-0"
-  set_values(ctx.resource_list["items"])
+          r["spec"]["machineTemplate"]["infrastructureRef"]["name"] = clusterName + "-control-plane"
+
+        if krmfn.match_gvk(r, "infrastructure.cluster.x-k8s.io/v1beta2", "AWSMachineTemplate"):
+          if r["metadata"]["name"].endswith("-control-plane"):
+            r["metadata"]["name"] = clusterName + "-control-plane"
+          elif r["metadata"]["name"].ends_with("-md-0"):
+            r["metadata"]["name"] = clusterName + "-md-0"
+
+        if krmfn.match_gvk(r, "bootstrap.cluster.x-k8s.io/v1beta1", "KubeadmConfigTemplate"):
+          if r["metadata"]["name"].ends_with("-md-0"):
+            r["metadata"]["name"] = clusterName + "-md-0"
+
+        if krmfn.match_gvk(r, "cluster.x-k8s.io/v1beta1", "MachineDeployment"):
+          if r["metadata"]["name"].ends_with("-md-0"):
+            r["metadata"]["name"] = clusterName + "-md-0"
+            r["spec"]["clusterName"] = clusterName
+            r["spec"]["template"]["spec"]["clusterName"] = clusterName
+            r["spec"]["template"]["spec"]["bootstrap"]["configRef"]["name"] = clusterName + "-md-0"
+            r["spec"]["template"]["spec"]["infrastructureRef"]["name"] = clusterName + "-md-0"
+
+  set_values(ctx.resource_list["items"])  # Thực hiện trên danh sách tài nguyên
