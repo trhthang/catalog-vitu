@@ -7,10 +7,7 @@ metadata:
 source: |-
   load("krmfn.star", "krmfn")
 
-  def set_values(resources):
-    for r in resources:
-      if krmfn.match_gvk(r, "v1", "ConfigMap") and krmfn.match_name(r, "kptfile.kpt.dev"):
-        new_cluster_name = r["data"]["name"]
+  def set_values1(resources):
     for r in resources:
       if krmfn.match_gvk(r, "infra.nephio.org/v1alpha1", "WorkloadCluster"):
         new_cluster_name = r["spec"]["clusterName"]
@@ -40,6 +37,12 @@ source: |-
           r["spec"]["template"]["spec"]["clusterName"] = new_cluster_name
           r["spec"]["template"]["spec"]["bootstrap"]["configRef"]["name"] = new_cluster_name + "-md-0"
           r["spec"]["template"]["spec"]["infrastructureRef"]["name"] = new_cluster_name + "-md-0"
+
+  def set_values2(resources):
+    for r in resources:
+      if krmfn.match_gvk(r, "v1", "ConfigMap") and krmfn.match_name(r, "kptfile.kpt.dev"):
+        new_cluster_name = r["data"]["name"]
+    for r in resources:
       if krmfn.match_gvk(r, "v1", "ConfigMap"):
         if r["metadata"]["name"] == "aws-ebs-csi-driver-addon":
           r["metadata"]["name"] = new_cluster_name + "-aws-ebs-csi-driver-addon"
@@ -59,4 +62,5 @@ source: |-
             if resource["kind"] == "ConfigMap" and resource["name"] == "aws-ebs-csi-driver-addon":
               resource["name"] = new_cluster_name + "-aws-ebs-csi-driver-addon"
 
-  set_values(ctx.resource_list["items"])
+  set_values1(ctx.resource_list["items"])
+  set_values2(ctx.resource_list["items"])
