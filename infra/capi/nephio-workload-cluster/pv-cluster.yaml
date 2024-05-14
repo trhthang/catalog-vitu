@@ -3,8 +3,6 @@ kind: PackageVariant
 metadata:
   name: example-cluster
 spec:
-  annotations:
-    approval.nephio.org/policy: initial
   upstream:
     package: cluster-capi-aws
     repo: catalog-infra-capi-vt
