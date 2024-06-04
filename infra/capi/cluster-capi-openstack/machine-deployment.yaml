@@ -1,10 +1,10 @@
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineDeployment
 metadata:
-  name: openstack-cluster1-md-0
+  name: openstack-nephio-md-0
   namespace: default
 spec:
-  clusterName: openstack-cluster1
+  clusterName: openstack-nephio
   replicas: 1
   selector:
     matchLabels: null
@@ -14,11 +14,11 @@ spec:
         configRef:
           apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
           kind: KubeadmConfigTemplate
-          name: openstack-cluster1-md-0
-      clusterName: openstack-cluster1
+          name: openstack-nephio-md-0
+      clusterName: openstack-nephio
       failureDomain: nova
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
         kind: OpenStackMachineTemplate
-        name: openstack-cluster1-md-0
+        name: openstack-nephio-md-0
       version: v1.30.0
