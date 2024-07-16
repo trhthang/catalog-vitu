@@ -6,9 +6,6 @@ metadata:
 spec:
   clusterName: aws-nephio
   replicas: 1
-  selector:
-    matchLabels:
-      cluster.x-k8s.io/deployment-name: aws-nephio-md-0
   template:
     metadata:
       labels:
